@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+                checkout scm
+            }
+        }
+
+        stage('Backend Build') {
+            steps {
+                echo 'Building backend...'
+                sh '''
+                    cd backend
+                    mvn clean package -DskipTests
+                '''
+            }
+        }
+
+        stage('Frontend Build') {
+            steps {
+                echo 'Building frontend...'
+                sh '''
+                    cd frontend
+                    npm ci
+                    npm run build
+                '''
+            }
+        }
+
+        stage('Docker Check') {
+            steps {
+                echo 'Checking Docker...'
+                sh 'docker --version'
+                sh 'docker compose version'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'CI Pipeline completed successfully!'
+        }
+
+        failure {
+            echo 'CI Pipeline failed. Please check the logs.'
+        }
+    }
+} 
