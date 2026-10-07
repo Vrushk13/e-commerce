@@ -38,6 +38,16 @@ pipeline {
                 sh 'docker compose version'
             }
         }
+
+        stage('Docker Build') {
+            steps {
+                echo 'Building Docker images...'
+                sh '''
+                    cd backend
+                    docker compose build
+                '''
+            }
+        }
     }
 
     post {
@@ -49,4 +59,4 @@ pipeline {
             echo 'CI Pipeline failed. Please check the logs.'
         }
     }
-} 
+}
