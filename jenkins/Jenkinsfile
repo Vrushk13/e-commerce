@@ -48,15 +48,51 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying application...'
+                sh '''
+                    cd backend
+                    docker compose up -d
+                    docker compose ps
+                '''
+            }
+        }
+
+        stage('Application Health Check') {
+            steps {
+                echo 'Checking application health...'
+                sh '''
+                    sleep 15
+
+                    echo "Checking Frontend..."
+                    curl -f http://localhost:5173
+
+                    echo "Checking Inventory API..."
+                    curl -f http://localhost:8081/api/inventory
+
+                    echo "Checking Orders API..."
+                    curl -f http://localhost:8081/api/orders
+
+                    echo "Application health checks passed successfully!"
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'CI Pipeline completed successfully!'
+            echo 'CI/CD Pipeline completed successfully!'
         }
 
         failure {
-            echo 'CI Pipeline failed. Please check the logs.'
+            echo 'CI/CD Pipeline failed. Please check the logs.'
+        }
+
+        always {
+            echo 'Pipeline execution completed.'
         }
     }
 }
+
