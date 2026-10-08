@@ -105,7 +105,7 @@ services:
       dockerfile: gateway_service/Dockerfile
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
       order-service:
         condition: service_started
@@ -116,10 +116,17 @@ services:
     image: prom/prometheus
     restart: unless-stopped
     ports:
-      - "9090:9090"
+      - "9091:9090"
     volumes:
       - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
+  grafana:
+    image: grafana/grafana
+    restart: unless-stopped
+    ports:
+      - "3006:3000"
+    depends_on:
+      - prometheus
   frontend:
     build:
       context: ../frontend
@@ -128,7 +135,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      VITE_API_URL: http://localhost:8080/api
+      VITE_API_URL: http://localhost:8081/api
 
 volumes:
   mongo-data:
