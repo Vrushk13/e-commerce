@@ -2,8 +2,21 @@ import { getApiUrl } from "./config";
 
 const BASE_URL = `${getApiUrl()}/orders`;
 
-export async function createOrder(order) {
+async function parseResponse(response) {
+    const text = await response.text();
 
+    if (!text) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return text;
+    }
+}
+
+export async function createOrder(order) {
     const response = await fetch(BASE_URL, {
         method: "POST",
         headers: {
@@ -12,27 +25,50 @@ export async function createOrder(order) {
         body: JSON.stringify(order)
     });
 
-    await processError(response);
+    if (!response.ok) {
+        const errorData = await parseResponse(response);
+        const error = new Error(
+            errorData?.message || `Request failed (HTTP ${response.status})`
+        );
+        error.status = response.status;
+        throw error;
+    }
 
-    return response.json();
+    return parseResponse(response);
 }
 
 export async function getOrders() {
-
     const response = await fetch(BASE_URL);
-    await processError(response);
-    return response.json();
+
+    if (!response.ok) {
+        const errorData = await parseResponse(response);
+        const error = new Error(
+    errorData?.message ||
+    `Request failed (HTTP ${response.status})`
+);
+        error.status = response.status;
+        throw error;
+    }
+
+    return parseResponse(response);
 }
 
 export async function getOrderById(id) {
-
     const response = await fetch(`${BASE_URL}/${id}`);
-    await processError(response);
-    return response.json();
+
+    if (!response.ok) {
+        const errorData = await parseResponse(response);
+        const error = new Error(
+            errorData?.message || "Request failed"
+        );
+        error.status = response.status;
+        throw error;
+    }
+
+    return parseResponse(response);
 }
 
 export async function updateOrder(id, updatedOrder) {
-
     const response = await fetch(`${BASE_URL}/${id}`, {
         method: "PATCH",
         headers: {
@@ -41,23 +77,31 @@ export async function updateOrder(id, updatedOrder) {
         body: JSON.stringify(updatedOrder)
     });
 
-    await processError(response);
-    return response.json();
+    if (!response.ok) {
+        const errorData = await parseResponse(response);
+        const error = new Error(
+            errorData?.message || "Request failed"
+        );
+        error.status = response.status;
+        throw error;
+    }
+
+    return parseResponse(response);
 }
 
 export async function cancelOrderById(id) {
+    const response = await fetch(`${BASE_URL}/${id}/cancel`, {
+        method: "PATCH"
+    });
 
-    const response = await fetch(`${BASE_URL}/${id}/cancel`, { method: "PATCH" });
-    await processError(response);
-    return response.json();
-}
-
-async function processError(response) {
     if (!response.ok) {
-        const errorData = await response.json();
-        const error = new Error(errorData.message || "Request failed");
+        const errorData = await parseResponse(response);
+        const error = new Error(
+            errorData?.message || "Request failed"
+        );
         error.status = response.status;
-
         throw error;
     }
+
+    return parseResponse(response);
 }
